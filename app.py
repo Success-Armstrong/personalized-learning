@@ -1,5 +1,10 @@
 # app.py
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+
 import streamlit as st
 from student_simulator import train_agent
 from rl_agent import QLearningAgent
