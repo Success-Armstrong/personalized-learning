@@ -2,7 +2,7 @@
 
 import streamlit as st
 from student_simulator import train_agent
-from rl import QLearningAgent
+from rl_agent import QLearningAgent
 import os
 
 st.set_page_config(page_title="AI Personalized Learning", layout="centered")
