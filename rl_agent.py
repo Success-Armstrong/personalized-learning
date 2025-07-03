@@ -2,6 +2,8 @@
 
 import numpy as np
 import environment
+import random
+
 
 class QLearningAgent:
     def __init__(self, alpha=0.1, gamma=0.9, epsilon=0.2):
@@ -47,3 +49,4 @@ def save_q_table(self, filename="q_table.npy"):
 
 def load_q_table(self, filename="q_table.npy"):
     self.q_table = np.load(filename, allow_pickle=True).item()
+
