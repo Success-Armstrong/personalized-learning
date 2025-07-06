@@ -1,31 +1,58 @@
+# app.py
+
 import streamlit as st
 from rl_agent import QLearningAgent
+from student_simulator import train_agent
+import os
+import numpy as np
 
-# Setup
+# Define actions
 actions = ["Watch Video", "Practice Quiz", "Read Theory"]
+
+# Initialize the agent and load Q-table
 agent = QLearningAgent(actions)
+agent.load_q_table()
 
-# Try loading Q-table
-try:
-    agent.load_q_table()
-except Exception as e:
-    st.warning(f"Could not load Q-table: {e}")
+# Video content mapping
+def get_video_url(topic):
+    video_library = {
+        "Algebra": "https://www.youtube.com/embed/HEfHFsfGXjs",
+        "Biology": "https://www.youtube.com/embed/Uz5cCI5bznk",
+        "History": "https://www.youtube.com/embed/dlB4T9RJSSo"
+    }
+    return video_library.get(topic, "")
 
-# UI
+# Streamlit app interface
 st.title("🎓 AI-Powered Personalized Learning")
 st.subheader("Using Q-Learning to Recommend Study Actions")
 
+# User inputs
 student_level = st.selectbox("Select Student Level", ["Beginner", "Intermediate", "Advanced"])
-subject = st.selectbox("Select Topic", ["Algebra", "Biology", "History"])
+topic = st.selectbox("Select Topic", ["Algebra", "Biology", "History"])
 
-if st.button("Recommend Study Action"):
-    state = (student_level, subject)
+if st.button("Get Recommendation"):
+    state = (student_level, topic)
+
+    # Ensure Q-table has entry for this state
+    if state not in agent.q_table:
+        agent.q_table[state] = np.zeros(len(actions))
+
     action_index = agent.choose_action(state)
-    recommendation = actions[action_index]
-    st.success(f"Recommended Activity: **{recommendation}**")
+    action = actions[action_index]
 
-# Option to save Q-table (can be placed elsewhere)
-try:
+    st.success(f"📌 Recommended Action: {action}")
+
+    # Show embedded video if action is "Watch Video"
+    if action == "Watch Video":
+        st.subheader("📺 Recommended Video")
+        video_url = get_video_url(topic)
+        if video_url:
+            st.video(video_url)
+        else:
+            st.info("No video available for this topic.")
+
+# Optional: train the agent from UI
+if st.button("Retrain Agent"):
+    agent = train_agent()
     agent.save_q_table()
-except Exception as e:
-    st.warning(f"Could not save Q-table: {e}")
+    st.success("✅ Agent retrained and Q-table saved.")
