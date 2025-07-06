@@ -6,10 +6,10 @@ from student_simulator import train_agent
 import os
 import numpy as np
 
-# Define actions
+# Define possible actions
 actions = ["Watch Video", "Practice Quiz", "Read Theory"]
 
-# Initialize the agent and load Q-table
+# Initialize agent
 agent = QLearningAgent(actions)
 agent.load_q_table()
 
@@ -22,18 +22,26 @@ def get_video_url(topic):
     }
     return video_library.get(topic, "")
 
-# Streamlit app interface
+# Reading material mapping
+def get_theory_text(topic):
+    return {
+        "Algebra": "Algebra involves symbols and rules for manipulating those symbols...",
+        "Biology": "Biology is the study of living organisms...",
+        "History": "History is the study of past events, especially in human affairs..."
+    }.get(topic, "No theory content available.")
+
+# Streamlit UI
 st.title("🎓 AI-Powered Personalized Learning")
 st.subheader("Using Q-Learning to Recommend Study Actions")
 
-# User inputs
+# User selects level and topic
 student_level = st.selectbox("Select Student Level", ["Beginner", "Intermediate", "Advanced"])
 topic = st.selectbox("Select Topic", ["Algebra", "Biology", "History"])
 
 if st.button("Get Recommendation"):
     state = (student_level, topic)
 
-    # Ensure Q-table has entry for this state
+    # Ensure state exists in Q-table
     if state not in agent.q_table:
         agent.q_table[state] = np.zeros(len(actions))
 
@@ -42,16 +50,25 @@ if st.button("Get Recommendation"):
 
     st.success(f"📌 Recommended Action: {action}")
 
-    # Show embedded video if action is "Watch Video"
-    if action == "Watch Video":
+    # Display based on student level
+    if student_level == "Beginner" and action == "Watch Video":
         st.subheader("📺 Recommended Video")
         video_url = get_video_url(topic)
-        if video_url:
-            st.video(video_url)
-        else:
-            st.info("No video available for this topic.")
+        st.video(video_url)
 
-# Optional: train the agent from UI
+    elif student_level == "Intermediate" and action == "Practice Quiz":
+        st.subheader("✅ Practice Quiz")
+        st.info("Quiz coming soon! For now, try answering: What is the core concept of this topic?")
+
+    elif student_level == "Advanced" and action == "Read Theory":
+        st.subheader("📄 Reading Material")
+        theory_text = get_theory_text(topic)
+        st.write(theory_text)
+
+    else:
+        st.warning("🤔 The recommendation doesn't match the expected learning path for this level.")
+
+# Optional: retrain agent
 if st.button("Retrain Agent"):
     agent = train_agent()
     agent.save_q_table()
