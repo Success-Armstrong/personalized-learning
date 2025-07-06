@@ -1,52 +1,38 @@
-# rl_agent.py
-
+import os
 import numpy as np
-import environment
 import random
 
-
 class QLearningAgent:
-    def __init__(self, alpha=0.1, gamma=0.9, epsilon=0.2):
-        self.alpha = alpha      # learning rate
-        self.gamma = gamma      # discount factor
-        self.epsilon = epsilon  # exploration rate
-
-        self.states = environment.get_all_states()
-        self.actions = environment.get_possible_actions()
-
-        self.q_table = self._initialize_q_table()
-
-    def _initialize_q_table(self):
-        q_table = {}
-        for state in self.states:
-            q_table[state] = {action: 0.0 for action in self.actions}
-        return q_table
+    def __init__(self, actions, learning_rate=0.1, discount_factor=0.9, epsilon=0.2):
+        self.actions = actions
+        self.q_table = {}
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.epsilon = epsilon
+        self.q_file = "q_table.npy"
 
     def choose_action(self, state):
-        if np.random.rand() < self.epsilon:
-            return random.choice(self.actions)  # explore
-        else:
-            # exploit: choose best known action
-            return max(self.q_table[state], key=self.q_table[state].get)
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(len(self.actions))
+        if np.random.uniform(0, 1) < self.epsilon:
+            return random.randint(0, len(self.actions) - 1)
+        return int(np.argmax(self.q_table[state]))
 
     def update_q_value(self, state, action, reward, next_state):
-        old_value = self.q_table[state][action]
-        next_max = max(self.q_table[next_state].values())
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(len(self.actions))
+        if next_state not in self.q_table:
+            self.q_table[next_state] = np.zeros(len(self.actions))
+        current_q = self.q_table[state][action]
+        max_future_q = np.max(self.q_table[next_state])
+        new_q = current_q + self.learning_rate * (reward + self.discount_factor * max_future_q - current_q)
+        self.q_table[state][action] = new_q
 
-        # Q-learning update rule
-        new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
-        self.q_table[state][action] = new_value
+    def save_q_table(self):
+        np.save(self.q_file, self.q_table)
 
-    def get_q_table(self):
-        return self.q_table
-
-
-
-import numpy as np
-
-def save_q_table(self, filename="q_table.npy"):
-    np.save(filename, self.q_table)
-
-def load_q_table(self, filename="q_table.npy"):
-    self.q_table = np.load(filename, allow_pickle=True).item()
-
+    def load_q_table(self):
+        if os.path.exists(self.q_file):
+            self.q_table = np.load(self.q_file, allow_pickle=True).item()
+        else:
+            self.q_table = {}
